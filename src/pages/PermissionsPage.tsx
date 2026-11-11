@@ -1,20 +1,13 @@
 import { usePlugin } from "@opencode/plugin/tui";
-import type { PanelInput } from "@opencode/plugin/tui/context";
+import type { PanelInput, Route } from "@opencode/plugin/tui/context";
 
-// export function PermissionsPage() {
-//   const ctx = usePlugin();
-//   return <text>Project</text>;
-// }
 
-function ReviewPanel(props: { panel: PanelInput }) {
-  return <text>Reviewing {props.panel.sessionID}</text>;
-}
 
 type PermissionsPageProps = {
-  sessionID?: string;
+  returnRoute?: Route | undefined;
 };
 
-export function PermissionsPage({ sessionID }: PermissionsPageProps) {
+export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
   const context = usePlugin();
 
   context.keymap.layer(() => ({
@@ -28,11 +21,7 @@ export function PermissionsPage({ sessionID }: PermissionsPageProps) {
         palette: true,
         bind: "esc",
         run: async () =>
-          context.ui.router.navigate(
-            sessionID
-              ? { type: "session", sessionID: sessionID }
-              : { type: "home" },
-          ),
+          context.ui.router.navigate(returnRoute ?? { type: "home" }),
       },
     ],
   }));
