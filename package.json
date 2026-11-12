@@ -1,6 +1,6 @@
 {
   "name": "opencode-permission-ui",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TUI screen for reviewing and pruning OpenCode's saved \"Allow always\" permission rules",
   "license": "MIT",
   "type": "module",
