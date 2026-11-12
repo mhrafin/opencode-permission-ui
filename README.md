@@ -36,7 +36,9 @@ Add the package to the CLI's `cli.json` in your global OpenCode config directory
 }
 ```
 
-TUI-only plugins live in `cli.json` so they stay active even when the CLI connects to a remote server. Pin a version with `"opencode-permission-ui@0.1.0"` if you prefer. See the [OpenCode plugin docs](https://opencode.ai/docs/cli/plugins/) for all accepted entry formats.
+TUI-only plugins live in `cli.json` so they stay active even when the CLI connects to a remote server. Pin a version with `"opencode-permission-ui@0.1.1"` if you prefer. See the [OpenCode plugin docs](https://opencode.ai/docs/cli/plugins/) for all accepted entry formats.
+
+> **Upgrading:** `0.1.0` shipped raw TSX and fails to load when installed from npm. Use `0.1.1` or newer.
 
 ### Option 2: install from source and register the path in `cli.json`
 
@@ -47,6 +49,8 @@ git clone https://github.com/mhrafin/opencode-permission-ui.git
 cd opencode-permission-ui
 npm install
 ```
+
+`npm install` also compiles `dist/` through the `prepare` script. Run `npm run build` yourself after pulling source changes.
 
 TUI-only plugins are configured in the CLI's `cli.json` in your global OpenCode config directory (typically `~/.config/opencode/cli.json`):
 
@@ -69,7 +73,7 @@ cd ~/.config/opencode/plugins/opencode-permission-ui
 npm install
 ```
 
-Restart OpenCode after installing from source. When the plugin loads you'll see the toast **"Opencode Permission TUI plugin loaded"**.
+The `prepare` script compiles the TUI entrypoint into `dist/` during install. Restart OpenCode after installing from source. When the plugin loads you'll see the toast **"Opencode Permission TUI plugin loaded"**.
 
 ## Usage
 
@@ -105,10 +109,13 @@ The plugin is two small modules:
 
 It's built on [`@opencode/plugin/tui`](https://opencode.ai/docs/build/plugins/cli/) and renders with [OpenTUI](https://opentui.com) primitives (`box`, `text`, `select`).
 
+The published package ships Solid-compiled JavaScript in `dist/`, not raw TSX. OpenTUI's Solid JSX transform skips `node_modules`, so a package that publishes TSX is compiled by Bun with the default React runtime and fails to load. The build step applies Solid's JSX transform before publishing; OpenCode then redirects the runtime imports to its own OpenTUI and `solid-js` instances.
+
 ## Development
 
 ```sh
-npm install
+npm install         # also runs the build via prepare
+npm run build       # compile src/**/*.tsx to dist/**/*.js
 npm run typecheck   # tsc --noEmit
 npm run test        # vitest run
 ```
@@ -120,8 +127,12 @@ src/
 ├── tui.tsx                    # plugin entry: route + slash command + keymap layer
 └── pages/
     └── PermissionsPage.tsx    # the permissions screen
+scripts/
+└── build.mjs                  # Solid JSX + TypeScript build into dist/
 tests/
-└── PermissionsPage.test.ts    # unit tests (vitest)
+├── PermissionsPage.test.ts    # unit tests (vitest)
+└── package.test.ts            # packaging regression test
+dist/                          # generated, published entrypoint
 ```
 
 OpenTUI peers (`@opentui/core`, `@opentui/solid`, `solid-js`) are declared as peer dependencies: OpenCode provides them at runtime, and npm installs them locally for typechecking and tests.
