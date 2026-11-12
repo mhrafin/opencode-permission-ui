@@ -21,6 +21,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
   const [busy, setBusy] = createSignal(false)
   const [selected, setSelected] = createSignal(0)
   const [error, setError] = createSignal<string>()
+  const [pendingDeletePermID, setPendingDeletePermID] = createSignal<string>()
 
   let request = 0
 
@@ -36,8 +37,12 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
   })
   const options = createMemo(() =>
     permissions().map((permission: PermissionSavedInfo) => ({
-      name: permission.action,
+      name:
+        permission.id === pendingDeletePermID()
+          ? "Press [ctrl + d] again to delete"
+          : permission.action,
       description: permission.resource,
+      value: permission.id,
     })),
   )
   const selectedPermission = createMemo(() => permissions().at(selected()))
@@ -81,6 +86,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
         })),
       })
       if (!id || id === projectID()) return
+      setPendingDeletePermID(undefined)
       setProjectID(id)
       setSelected(0)
       await loadPermissions(id)
@@ -89,11 +95,35 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
     }
   }
 
-  async function removeSavedPermission() {
-    const target = selectedPermission()
+  function requestRemoveSavedPermission() {
+    const targetPerm = selectedPermission()
     const id = projectID()
 
-    if (!target || !id) {
+    // If none of them exists
+    if (!targetPerm || !id) {
+      context.ui.toast.show({
+        message: "Select a saved permission first",
+        variant: "warning",
+      })
+      return
+    }
+
+    // First press arms deletion for this exact permission; the next press
+    // only deletes if the selection still points at the same permission.
+    if (pendingDeletePermID() !== targetPerm.id) {
+      setPendingDeletePermID(targetPerm.id)
+      return
+    }
+
+    setPendingDeletePermID(undefined)
+    void removeSavedPermission()
+  }
+
+  async function removeSavedPermission() {
+    const targetPerm = selectedPermission()
+    const id = projectID()
+
+    if (!targetPerm || !id) {
       context.ui.toast.show({
         message: "Select a saved permission first",
         variant: "warning",
@@ -105,7 +135,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
     setError(undefined)
 
     try {
-      await context.client.permission.saved.remove({ id: target.id })
+      await context.client.permission.saved.remove({ id: targetPerm.id })
 
       if (!id) {
         setStatus("ready")
@@ -123,7 +153,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
       })
 
       context.ui.toast.show({
-        message: `Deleted ${target.action}`,
+        message: `Deleted permission: "${targetPerm.action} - ${targetPerm.resource}"`,
         variant: "success",
       })
     } catch (cause) {
@@ -137,10 +167,12 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
       })
     } finally {
       setBusy(false)
+      setPendingDeletePermID(undefined)
     }
   }
 
   async function refresh() {
+    setPendingDeletePermID(undefined)
     const id = projectID()
     if (!id) return initialize()
     context.data.project.invalidate()
@@ -154,6 +186,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
   async function initialize() {
     setStatus("loading")
     setError(undefined)
+    setPendingDeletePermID(undefined)
     try {
       context.data.project.invalidate()
       await context.data.project.sync()
@@ -195,7 +228,9 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
         palette: true,
         bind: "ctrl+d",
         enabled: () => !busy(),
-        run: async () => void removeSavedPermission(),
+        run: async () => {
+          requestRemoveSavedPermission()
+        },
       },
       {
         id: "permission.ui.close",
@@ -204,8 +239,10 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
         palette: true,
         bind: "esc",
         enabled: () => !busy(),
-        run: async () =>
-          context.ui.router.navigate(returnRoute ?? { type: "home" }),
+        run: async () => {
+          setPendingDeletePermID(undefined)
+          context.ui.router.navigate(returnRoute ?? { type: "home" })
+        },
       },
       {
         id: "permission-ui.project",
@@ -231,21 +268,7 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
         Rules saved when you choose "Allow always". They are scoped to the
         selected project.
       </text>
-      {/* <text fg={context.theme.text.muted}>
-        {context.data.location.default().directory}
-      </text>
-      <text fg={context.theme.text.muted}>
-        {context.data.project.list().at(0)?.canonical}
-      </text> */}
-      <text>
-        Selected project directory:{" " + projectDir()}
-        {/* {
-          getProjectFromDirectory(
-            projects(),
-            context.data.location.default().directory,
-          )?.canonical
-        } */}
-      </text>
+      <text>Selected project directory:{" " + projectDir()}</text>
       <Show when={status() === "error"}>
         <text fg={context.theme.text.feedback.error.base}>{error()}</text>
       </Show>
@@ -260,18 +283,39 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
         >
           <box flexGrow={1} border borderColor={context.theme.border.base}>
             <select
+              selectedTextColor={
+                pendingDeletePermID()
+                  ? context.theme.text.action.destructive.focused
+                  : undefined
+              }
+              selectedDescriptionColor={
+                pendingDeletePermID()
+                  ? context.theme.text.action.destructive.focused
+                  : undefined
+              }
+              selectedBackgroundColor={
+                pendingDeletePermID()
+                  ? context.theme.background.action.destructive.focused
+                  : undefined
+              }
               focused
               flexGrow={1}
               options={options()}
               selectedIndex={selected()}
-              onChange={(index) => setSelected(index)}
+              onChange={(index) => {
+                setSelected(index)
+                setPendingDeletePermID(undefined)
+              }}
+              wrapSelection={true}
+              showScrollIndicator={true}
             />
-            <text>Selected: {selectedPermission()?.id ?? "(none)"}</text>
-            {/* <text>Selected: {permissionID().id}</text> */}
+            <text>
+              Selected Permission ID: {selectedPermission()?.id ?? "(none)"}
+            </text>
           </box>
         </Show>
       </Show>
-      <text>[ctrl+d] delete [p] change project [esc] back</text>
+      <text>[ctrl+d] delete [p] change project [r] refresh [esc] back</text>
     </box>
   )
 }
