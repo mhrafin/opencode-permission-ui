@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin/tui";
 import type { Route } from "@opencode/plugin/tui/context";
-import { PermissionsPage } from "./pages/PermissionsPage.jsx";
+import { PermissionsPage } from "./pages/PermissionsPage.js";
 
 function snapshotRoute(route: Route): Route {
   if (route.type === "home") return { type: "home" };
