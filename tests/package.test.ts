@@ -22,8 +22,9 @@ describe("package manifest", () => {
     expect(manifest.files).not.toContain("src")
   })
 
-  it("builds before packing and keeps the OpenTUI peers", () => {
-    expect(manifest.scripts.build).toBe("node scripts/build.mjs")
+  it("builds with the Babel CLI and keeps the OpenTUI peers", () => {
+    expect(manifest.scripts.build).toContain("babel src")
+    expect(manifest.scripts.build).toContain("--out-dir dist")
     expect(manifest.scripts.prepare).toBe("npm run build")
     expect(manifest.peerDependencies).toMatchObject({
       "@opentui/core": expect.any(String),

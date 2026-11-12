@@ -1,0 +1,13 @@
+{
+  "sourceType": "module",
+  "presets": [
+    [
+      "babel-preset-solid",
+      {
+        "moduleName": "@opentui/solid",
+        "generate": "universal"
+      }
+    ],
+    "@babel/preset-typescript"
+  ]
+}

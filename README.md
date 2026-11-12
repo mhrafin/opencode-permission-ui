@@ -127,11 +127,11 @@ src/
 ├── tui.tsx                    # plugin entry: route + slash command + keymap layer
 └── pages/
     └── PermissionsPage.tsx    # the permissions screen
-scripts/
-└── build.mjs                  # Solid JSX + TypeScript build into dist/
+babel.config.json              # Solid JSX + TypeScript compiler config
 tests/
 ├── PermissionsPage.test.ts    # unit tests (vitest)
-└── package.test.ts            # packaging regression test
+├── package.test.ts            # packaging regression test
+└── build.test.ts              # compiled output checks (no React runtime)
 dist/                          # generated, published entrypoint
 ```
 
