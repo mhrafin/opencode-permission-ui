@@ -13,7 +13,7 @@ Every time OpenCode asks for permission to run a tool and you answer "Allow alwa
 
 - **See every saved rule** — browse all "Allow always" permissions scoped to a project, with the selected rule's ID shown for reference
 - **Project switcher** — preselects the project matching the directory you launched OpenCode from; press `p` to jump to another project
-- **Safe deletion** — press `ctrl+d` once to arm (the row highlights in destructive colors and reads *"Press [ctrl + d] again to delete"*), press again to delete. Moving the selection disarms, so you can't delete the wrong row by accident
+- **Safe deletion** — press `ctrl+d` once to arm (the row highlights in destructive colors and reads _"Press [ctrl + d] again to delete"_), press again to delete. Moving the selection disarms, so you can't delete the wrong row by accident
 - **Refresh on demand** — press `r` to re-sync the project list and the selected project's permissions
 - **Non-destructive navigation** — opening the screen remembers where you were; `esc` returns you to that exact route
 - **Theme-aware** — all colors come from OpenCode's theme tokens (text, borders, destructive action colors)
@@ -32,7 +32,7 @@ Add the package to the CLI's `cli.json` in your global OpenCode config directory
 
 ```jsonc
 {
-  "plugins": ["opencode-permission-ui"]
+  "plugins": ["opencode-permission-ui"],
 }
 ```
 
@@ -52,7 +52,7 @@ TUI-only plugins are configured in the CLI's `cli.json` in your global OpenCode 
 
 ```jsonc
 {
-  "plugins": ["/absolute/path/to/opencode-permission-ui"]
+  "plugins": ["/absolute/path/to/opencode-permission-ui"],
 }
 ```
 
@@ -81,27 +81,26 @@ Open the OpenCode TUI and run the slash command:
 
 You'll land on the **Permission UI** screen listing the selected project's saved permissions.
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Move the selection (wraps at the ends) |
-| `p` | Change project (opens a select dialog) |
-| `r` | Refresh projects and the selected project's permissions |
-| `ctrl+d` | Delete the selected permission — press **twice** to confirm |
-| `esc` | Back to the screen you came from |
+| Key       | Action                                                      |
+| --------- | ----------------------------------------------------------- |
+| `↑` / `↓` | Move the selection (wraps at the ends)                      |
+| `p`       | Change project (opens a select dialog)                      |
+| `r`       | Refresh projects and the selected project's permissions     |
+| `ctrl+d`  | Delete the selected permission — press **twice** to confirm |
+| `esc`     | Back to the screen you came from                            |
 
 A few things to know:
 
 - Rules are scoped to the selected project — switching projects switches the list.
 - Deleting a rule takes effect immediately and cannot be undone from the UI.
-- The current status (loading / ready / error) and the selected permission ID are shown on screen.
 
 ## How it works
 
 The plugin is two small modules:
 
-| File | Role |
-|------|------|
-| [`src/tui.tsx`](src/tui.tsx) | Plugin entry (`Plugin.define`). Registers the route, the `/permissions` slash command, and snapshots your current route so `esc` can return you to it |
+| File                                                             | Role                                                                                                                                                                                                |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`src/tui.tsx`](src/tui.tsx)                                     | Plugin entry (`Plugin.define`). Registers the route, the `/permissions` slash command, and snapshots your current route so `esc` can return you to it                                               |
 | [`src/pages/PermissionsPage.tsx`](src/pages/PermissionsPage.tsx) | The screen itself — a [SolidJS](https://www.solidjs.com/) component that reads projects and saved permissions via `context.data.project.*` and deletes via `context.client.permission.saved.remove` |
 
 It's built on [`@opencode/plugin/tui`](https://opencode.ai/docs/build/plugins/cli/) and renders with [OpenTUI](https://opentui.com) primitives (`box`, `text`, `select`).
@@ -130,7 +129,7 @@ OpenTUI peers (`@opentui/core`, `@opentui/solid`, `solid-js`) are declared as pe
 ## Getting help
 
 - **OpenCode plugin docs** — [configuring plugins](https://opencode.ai/docs/plugins/) and [building TUI plugins](https://opencode.ai/docs/build/plugins/cli/)
-- **OpenCode source code** — [anomalyco/opencode](https://github.com/anomalyco/opencode) (see also [AGENTS.md](AGENTS.md))
+- **OpenCode source code** — [anomalyco/opencode](https://github.com/anomalyco/opencode)
 - **Bugs and feature requests** — [open an issue](https://github.com/mhrafin/opencode-permission-ui/issues)
 
 ## Contributing
@@ -140,7 +139,7 @@ Contributions are welcome! To get started:
 1. Fork the repository and create a feature branch.
 2. Make your change and keep it focused — one concern per pull request.
 3. Run `npm run typecheck && npm run test` and make sure both pass.
-4. Add or update tests for pure utilities (see [`tests/PermissionsPage.test.ts`](tests/PermissionsPage.test.ts) for the pattern).
+4. Add or update tests for pure utilities.
 5. Open a pull request describing what changed and why.
 
 The project is maintained by **[@mhrafin](https://github.com/mhrafin)**.
