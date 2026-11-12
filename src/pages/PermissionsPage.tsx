@@ -8,15 +8,6 @@ export function createProjectTitle(canonical: string) {
   return separator === -1 ? canonical : canonical.slice(separator)
 }
 
-function getProjectFromDirectory(
-  projects: Project[],
-  directory: string,
-): Project | undefined {
-  return projects
-    .filter((project) => directory === project.canonical)
-    .sort((a, b) => a.canonical.length - b.canonical.length)[0]
-}
-
 type PermissionsPageProps = {
   returnRoute?: Route | undefined
 }
@@ -49,15 +40,29 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
       description: permission.resource,
     })),
   )
+  const selectedPermission = createMemo(() => permissions().at(selected()))
+
+  // Helper Functions
+  function resolveInitialProjectID(projects: Project[]): string | undefined {
+    const directory = context.data.location.default().directory
+    const currentProject = projects
+      .filter((project) => directory === project.canonical)
+      .sort((a, b) => a.canonical.length - b.canonical.length)[0]
+    return currentProject?.id ?? projects[0]?.id
+  }
 
   async function loadPermissions(id: string) {
     setStatus("loading")
     setError(undefined)
     try {
+      context.data.project.permission.invalidate(id)
       await context.data.project.permission.sync(id)
       setStatus("ready")
     } catch (cause) {
       setStatus("error")
+      setError(
+        cause instanceof Error ? cause.message : "Failed to load permissions",
+      )
     }
   }
 
@@ -83,16 +88,76 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
       setBusy(false)
     }
   }
+
+  async function removeSavedPermission() {
+    const target = selectedPermission()
+    const id = projectID()
+
+    if (!target || !id) {
+      context.ui.toast.show({
+        message: "Select a saved permission first",
+        variant: "warning",
+      })
+      return
+    }
+
+    setBusy(true)
+    setError(undefined)
+
+    try {
+      await context.client.permission.saved.remove({ id: target.id })
+
+      if (!id) {
+        setStatus("ready")
+        return
+      }
+      await loadPermissions(id)
+
+      if (status() !== "ready") return
+
+      setProjectID(id)
+
+      setSelected((index) => {
+        const count = permissions().length
+        return count === 0 ? 0 : Math.min(index, count - 1)
+      })
+
+      context.ui.toast.show({
+        message: `Deleted ${target.action}`,
+        variant: "success",
+      })
+    } catch (cause) {
+      setStatus("error")
+      setError(
+        cause instanceof Error ? cause.message : "Failed to delete permission",
+      )
+      context.ui.toast.show({
+        message: "Failed to delete permission",
+        variant: "error",
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function refresh() {
+    const id = projectID()
+    if (!id) return initialize()
+    context.data.project.invalidate()
+    await loadPermissions(id)
+    context.ui.toast.show({
+      message: "Refreshed Projects and Permissions",
+      variant: "success",
+    })
+  }
+
   async function initialize() {
     setStatus("loading")
+    setError(undefined)
     try {
+      context.data.project.invalidate()
       await context.data.project.sync()
-      const currentDirectory = context.data.location.default().directory
-      const currentProject = getProjectFromDirectory(
-        projects(),
-        currentDirectory,
-      )
-      const id = currentProject?.id ?? projects()[0]?.id
+      const id = resolveInitialProjectID(projects())
 
       if (!id) {
         setStatus("ready")
@@ -114,6 +179,24 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
     mode: "global",
     enabled: true,
     commands: [
+      {
+        id: "permission.ui.refresh",
+        title: "Refresh current project's permissions",
+        group: "Permission UI",
+        palette: true,
+        bind: "r",
+        enabled: true,
+        run: async () => void refresh(),
+      },
+      {
+        id: "permission.ui.delete",
+        title: "Delete a saved Permission",
+        group: "Permission UI",
+        palette: true,
+        bind: "ctrl+d",
+        enabled: () => !busy(),
+        run: async () => void removeSavedPermission(),
+      },
       {
         id: "permission.ui.close",
         title: "Exit Permission UI",
@@ -180,13 +263,15 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
               focused
               flexGrow={1}
               options={options()}
-              // selectedIndex={selected()}
-              // onChange={(index) => setSelected(index)}
+              selectedIndex={selected()}
+              onChange={(index) => setSelected(index)}
             />
+            <text>Selected: {selectedPermission()?.id ?? "(none)"}</text>
+            {/* <text>Selected: {permissionID().id}</text> */}
           </box>
         </Show>
       </Show>
-      <text>[p] change project [esc] back</text>
+      <text>[ctrl+d] delete [p] change project [esc] back</text>
     </box>
   )
 }
