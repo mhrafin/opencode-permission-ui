@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "build": "babel src --out-dir dist --extensions .ts,.tsx --delete-dir-on-start",
+    "dev": "babel src --out-dir dist --extensions .ts,.tsx --watch",
     "prepare": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

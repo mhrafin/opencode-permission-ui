@@ -115,10 +115,13 @@ The published package ships Solid-compiled JavaScript in `dist/`, not raw TSX. O
 
 ```sh
 npm install         # also runs the build via prepare
-npm run build       # compile src/**/*.tsx to dist/**/*.js
+npm run dev         # watch src/ and rebuild dist/ on every change
+npm run build       # one-shot clean build of src/**/*.tsx to dist/**/*.js
 npm run typecheck   # tsc --noEmit
 npm run test        # vitest run
 ```
+
+OpenCode loads the plugin through the `./tui` export in `package.json`, so it watches `dist/`, not `src/`. Run `npm run dev` while developing and OpenCode will reload the local plugin whenever `dist/` changes. If a change does not appear, restart the TUI.
 
 Project layout:
 
