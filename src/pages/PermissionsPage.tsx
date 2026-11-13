@@ -309,13 +309,22 @@ export function PermissionsPage({ returnRoute }: PermissionsPageProps) {
               wrapSelection={true}
               showScrollIndicator={true}
             />
-            <text>
+            <text fg={context.theme.text.muted}>
               Selected Permission ID: {selectedPermission()?.id ?? "(none)"}
             </text>
           </box>
         </Show>
       </Show>
-      <text>[ctrl+d] delete [p] change project [r] refresh [esc] back</text>
+      <text>
+        <b>Delete</b>{" "}
+        <span style={{ fg: context.theme.text.muted }}>[ctrl+d]</span>{" "}
+        <b>Change Project</b>{" "}
+        <span style={{ fg: context.theme.text.muted }}>[p]</span>{" "}
+        <b>Refresh</b>{" "}
+        <span style={{ fg: context.theme.text.muted }}>[r]</span>{" "}
+        <b>Close Permission UI</b>{" "}
+        <span style={{ fg: context.theme.text.muted }}>[esc]</span>
+      </text>
     </box>
   )
 }
